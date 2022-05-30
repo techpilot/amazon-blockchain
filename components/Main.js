@@ -2,6 +2,7 @@ import React, { useContext } from "react";
 import { AmazonContext } from "../context/AmazonContext";
 import Cards from "./Cards";
 import Header from "./Header";
+import Featured from "./Featured";
 
 const Main = () => {
   const styles = {
@@ -11,11 +12,38 @@ const Main = () => {
     transactionCard: `flex justify-between mb-[20px] p-[30px] bg-[#42667e] text-white rounded-xl shadow-xl font-bold gap-[20px] text-xl`,
   };
 
+  const { recentTransactions } = useContext(AmazonContext);
+  console.log(recentTransactions);
+
   return (
     <div className={styles.container}>
       <Header />
-      {/* <Featured /> */}
+      <Featured />
       <Cards />
+      {recentTransactions.length > 0 && (
+        <h1 className={styles.recentTitle}>Recent Transactions</h1>
+      )}
+
+      {recentTransactions &&
+        recentTransactions.map((transaction, index) => {
+          return (
+            <div key={index} className={styles.transactionCard}>
+              <p>From: {transaction?.attributes?.from_address}</p>
+              <p>To: {transaction?.attributes?.to_address}</p>
+              <p>
+                Hash:{" "}
+                <a
+                  href={`https://ropsten.etherscan.io/tx/${transaction?.attributes?.hash}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {transaction.attributes.hash.slice(0, 10)}...
+                </a>
+                <p>Gas: {transaction?.attributes?.gas}</p>
+              </p>
+            </div>
+          );
+        })}
     </div>
   );
 };

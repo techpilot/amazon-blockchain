@@ -15,6 +15,8 @@ export const AmazonProvider = ({ children }) => {
   const [etherscanLink, setEtherscanLink] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [balance, setBalance] = useState("");
+  const [recentTransactions, setRecentTransactions] = useState([]);
+  const [ownedItems, setOwnedItems] = useState([]);
 
   const {
     authenticate,
@@ -25,11 +27,19 @@ export const AmazonProvider = ({ children }) => {
     isWeb3Enabled,
   } = useMoralis();
 
+  // get assets from moralis
   const {
     data: assetsData,
     error: assetsDataError,
-    isLoading: assetsDataisLoading,
+    isLoading: assetsDataIsLoading,
   } = useMoralisQuery("assets");
+
+  // get use data
+  const {
+    data: userData,
+    error: userDataError,
+    isLoading: userDataIsLoading,
+  } = useMoralisQuery("_User");
 
   const handleSetUsername = async () => {
     if (user) {
@@ -45,6 +55,7 @@ export const AmazonProvider = ({ children }) => {
     }
   };
 
+  // get user token balance
   const getBalance = async () => {
     try {
       if (!isAuthenticated || !currentAccount) return;
@@ -67,6 +78,38 @@ export const AmazonProvider = ({ children }) => {
     }
   };
 
+  // buy asset with erc tokens
+  const buyAsset = async (price, asset) => {
+    try {
+      if (!isAuthenticated) return;
+
+      const options = {
+        type: "erc20",
+        amount: price,
+        receiver: amazonCoinAddress,
+        contractAddress: amazonCoinAddress,
+      };
+
+      let transaction = await Moralis.transfer(options);
+      const receipt = await transaction.wait();
+
+      if (receipt) {
+        const res = userData[0].add("ownedAssets", {
+          ...asset,
+          purchaseDate: Date.now(),
+          etherscanLink: `https://ropsten.etherscan.io/tx/${receipt.transactionHash}`,
+        });
+
+        await res.save().then(() => {
+          alert("You've successfully purchased this asset!");
+        });
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  // buy amazon erc tokens with ETH
   const buyTokens = async () => {
     if (!isAuthenticated) {
       await authenticate();
@@ -95,6 +138,20 @@ export const AmazonProvider = ({ children }) => {
     );
   };
 
+  const listenToUpdates = async () => {
+    let query = new Moralis.Query("EthTransactions");
+
+    try {
+      let subscription = await query.subscribe();
+      subscription.on("update", (object) => {
+        console.log(object);
+        setRecentTransactions([object]);
+      });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   const getAssets = async () => {
     try {
       await enableWeb3();
@@ -104,22 +161,34 @@ export const AmazonProvider = ({ children }) => {
     }
   };
 
+  const getOwnedAssets = async () => {
+    try {
+      if (userData[0].attributes.ownedAssets) {
+        setOwnedItems((prev) => [...prev, userData[0].attributes.ownedAssets]);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       if (isAuthenticated) {
         getBalance();
+        listenToUpdates();
         const currentUsername = await user?.get("nickname");
         setUsername(currentUsername);
         const account = await user?.get("ethAddress");
         setCurrentAccount(account);
       }
     })();
-  }, [isAuthenticated, user, username, currentAccount, getBalance]);
+  }, [isAuthenticated, user, username, currentAccount]);
 
   useEffect(() => {
     (async () => {
       if (isWeb3Enabled) {
         await getAssets();
+        await getOwnedAssets();
       }
     })();
   }, [assetsData]);
@@ -144,6 +213,9 @@ export const AmazonProvider = ({ children }) => {
         etherscanLink,
         currentAccount,
         buyTokens,
+        buyAsset,
+        recentTransactions,
+        ownedItems,
       }}
     >
       {children}

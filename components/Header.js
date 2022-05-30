@@ -35,7 +35,7 @@ const useStyles = makeStyles((theme) => ({
 
 const Header = () => {
   const styles = {
-    container: `h-[60px] w-full flex items-center gap-5 px-16 mb-[50px]`,
+    container: `h-[60px] w-full flex items-center gap-5 px-16`,
     logo: `flex items-center ml-[20px] cursor-pointer flex-1`,
     search: `p-[25px] mr-[30px] w-[400px] h-[40px] bg-white rounded-full shadow-lg flex flex items-center border border-black`,
     searchInput: `bg-transparent focus:outline-none border-none flex-1 items-center flex`,
@@ -45,7 +45,6 @@ const Header = () => {
   };
 
   const { balance } = useContext(AmazonContext);
-  console.log(balance);
 
   const classes = useStyles();
   const [modalStyle] = useState(getModalStyle);
@@ -86,9 +85,6 @@ const Header = () => {
             >
               {balance}
               <FaCoins className={styles.coins} />
-              {/* <Modal isOpen={isModalOpen} transition={ModalTransition.SCALE}>
-              <BuyModal close={closeModal} />
-            </Modal> */}
             </div>
           ) : (
             <div
@@ -96,9 +92,6 @@ const Header = () => {
               onClick={() => setOpen(true)}
             >
               0 AC <FaCoins className={styles.coins} />
-              {/* <Modal isOpen={isModalOpen} transition={ModalTransition.SCALE}>
-              <BuyModal close={closeModal} />
-            </Modal> */}
             </div>
           )}
           <CgMenuGridO className={styles.menuItem} fontSize={30} />

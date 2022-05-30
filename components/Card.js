@@ -12,8 +12,13 @@ const Card = ({ item }) => {
     coins: ``,
   };
 
+  const { buyAsset } = useContext(AmazonContext);
+
   return (
-    <div className={styles.cardContainer}>
+    <div
+      className={styles.cardContainer}
+      onClick={() => buyAsset(item.price, item)}
+    >
       <div className={styles.card}>
         <Image
           src={item.src}
